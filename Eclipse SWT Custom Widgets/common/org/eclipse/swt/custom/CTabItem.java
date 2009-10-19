@@ -53,7 +53,7 @@ public class CTabItem extends Item {
 
 	// internal constants
 	static final int TOP_MARGIN = 2;
-	static final int BOTTOM_MARGIN = 2;
+	static final int BOTTOM_MARGIN = 5;
 	static final int LEFT_MARGIN = 4;
 	static final int RIGHT_MARGIN = 4;
 	static final int INTERNAL_SPACING = 4;
@@ -180,39 +180,129 @@ void drawClose(GC gc) {
 	int y = closeRect.y + indent;
 	y += parent.onBottom ? -1 : 1;
 	
+	int closeDiameter = 11;
 	Color closeBorder = display.getSystemColor(CTabFolder.BUTTON_BORDER);
 	switch (closeImageState) {
 		case CTabFolder.NORMAL: {
-			int[] shape = new int[] {x,y, x+2,y, x+4,y+2, x+5,y+2, x+7,y, x+9,y, 
-					                 x+9,y+2, x+7,y+4, x+7,y+5, x+9,y+7, x+9,y+9,
-			                         x+7,y+9, x+5,y+7, x+4,y+7, x+2,y+9, x,y+9,
-			                         x,y+7, x+2,y+5, x+2,y+4, x,y+2};
-			gc.setBackground(display.getSystemColor(CTabFolder.BUTTON_FILL));
-			gc.fillPolygon(shape);
-			gc.setForeground(closeBorder);
-			gc.drawPolygon(shape);
+		  if (parent.simple) {
+		    int[] shape = new int[] {x,y, x+2,y, x+4,y+2, x+5,y+2, x+7,y, x+9,y, 
+		        x+9,y+2, x+7,y+4, x+7,y+5, x+9,y+7, x+9,y+9,
+		        x+7,y+9, x+5,y+7, x+4,y+7, x+2,y+9, x,y+9,
+		        x,y+7, x+2,y+5, x+2,y+4, x,y+2};
+		    gc.setBackground(display.getSystemColor(CTabFolder.BUTTON_FILL));
+		    gc.fillPolygon(shape);
+		    gc.setForeground(closeBorder);
+		    gc.drawPolygon(shape);
+		  }
+		  else {
+		    // only show it on rollover
+		  }
 			break;
 		}
 		case CTabFolder.HOT: {
-			int[] shape = new int[] {x,y, x+2,y, x+4,y+2, x+5,y+2, x+7,y, x+9,y, 
-					                 x+9,y+2, x+7,y+4, x+7,y+5, x+9,y+7, x+9,y+9,
-			                         x+7,y+9, x+5,y+7, x+4,y+7, x+2,y+9, x,y+9,
-			                         x,y+7, x+2,y+5, x+2,y+4, x,y+2};
-			gc.setBackground(parent.getFillColor());
-			gc.fillPolygon(shape);
-			gc.setForeground(closeBorder);
-			gc.drawPolygon(shape);
-			break;
+		  if (parent.simple) {
+		    int[] shape = new int[] {x,y, x+2,y, x+4,y+2, x+5,y+2, x+7,y, x+9,y, 
+		        x+9,y+2, x+7,y+4, x+7,y+5, x+9,y+7, x+9,y+9,
+		        x+7,y+9, x+5,y+7, x+4,y+7, x+2,y+9, x,y+9,
+		        x,y+7, x+2,y+5, x+2,y+4, x,y+2};
+		    Color fill = new Color(display, CTabFolder.CLOSE_FILL);
+		    gc.setBackground(fill);
+		    gc.fillPolygon(shape);
+		    fill.dispose();
+		    gc.setForeground(closeBorder);
+		    gc.drawPolygon(shape);
+		  }
+		  else {
+		    Color closeBackgroundColor;
+		    if (parent.selectedIndex == parent.indexOf(this)) {
+		      closeBackgroundColor = new Color(getDisplay(), 189, 189, 189);
+		    }
+		    else {
+		      closeBackgroundColor = new Color(getDisplay(), 66, 66, 66);
+		    }
+
+		    gc.setBackground(closeBackgroundColor);
+		    gc.fillArc(x, y, closeDiameter, closeDiameter, 0, 360);
+		    //Hack to fix subpixel rendering issue
+        gc.fillArc(x-1, y-1, closeDiameter, closeDiameter, 0, 360);
+		    closeBackgroundColor.dispose();
+		    int oldAlpha = gc.getAlpha();
+
+		    Color closeShadowColor = new Color(getDisplay(), 90, 90, 90);
+		    gc.setForeground(closeShadowColor);
+		    gc.setAlpha(189);
+		    gc.drawArc(x - 1, y - 1, closeDiameter + 1, closeDiameter + 1, 0, 180);
+		    closeShadowColor.dispose();
+
+		    Color closeHighlightColor = new Color(getDisplay(), 128, 128, 128);
+		    gc.setForeground(closeHighlightColor);
+		    gc.setAlpha(189);
+		    gc.drawArc(x - 1, y - 1, closeDiameter + 1, closeDiameter + 1, 180, 180);
+		    closeHighlightColor.dispose();
+
+		    Color xColor = new Color(getDisplay(), 255, 255, 255);
+		    gc.setForeground(xColor);
+		    int oldLineWidth = gc.getLineWidth();
+		    gc.setLineWidth(2);
+		    gc.drawLine(x + 3, y + 3, x + closeDiameter - 3, y + closeDiameter - 3);
+		    gc.drawLine(x + 3, y + closeDiameter - 3, x + closeDiameter - 3, y + 3);
+		    xColor.dispose();
+		    gc.setLineWidth(oldLineWidth);
+		    gc.setAlpha(oldAlpha);
+		    closeBackgroundColor.dispose();
+		  }
+		  break;
 		}
 		case CTabFolder.SELECTED: {
-			int[] shape = new int[] {x+1,y+1, x+3,y+1, x+5,y+3, x+6,y+3, x+8,y+1, x+10,y+1, 
-					                 x+10,y+3, x+8,y+5, x+8,y+6, x+10,y+8, x+10,y+10,
-			                         x+8,y+10, x+6,y+8, x+5,y+8, x+3,y+10, x+1,y+10,
-			                         x+1,y+8, x+3,y+6, x+3,y+5, x+1,y+3};
-			gc.setBackground(parent.getFillColor());
-			gc.fillPolygon(shape);
-			gc.setForeground(closeBorder);
-			gc.drawPolygon(shape);
+		  if (parent.simple) {
+		    int[] shape = new int[] {x+1,y+1, x+3,y+1, x+5,y+3, x+6,y+3, x+8,y+1, x+10,y+1, 
+		        x+10,y+3, x+8,y+5, x+8,y+6, x+10,y+8, x+10,y+10,
+		        x+8,y+10, x+6,y+8, x+5,y+8, x+3,y+10, x+1,y+10,
+		        x+1,y+8, x+3,y+6, x+3,y+5, x+1,y+3};
+		    Color fill = new Color(display, CTabFolder.CLOSE_FILL);
+		    gc.setBackground(fill);
+		    gc.fillPolygon(shape);
+		    fill.dispose();
+		    gc.setForeground(closeBorder);
+		    gc.drawPolygon(shape);
+		  }
+		  else {
+		    Color closeBackgroundColor;
+		    if (parent.selectedIndex == parent.indexOf(this)) {
+		      closeBackgroundColor = new Color(getDisplay(), 189, 189, 189);
+		    }
+		    else {
+		      closeBackgroundColor = new Color(getDisplay(), 66, 66, 66);
+		    }
+
+		    gc.setBackground(closeBackgroundColor);
+		    gc.fillArc(x, y, closeDiameter, closeDiameter, 0, 360);
+		    closeBackgroundColor.dispose();
+		    int oldAlpha = gc.getAlpha();
+
+		    Color closeShadowColor = new Color(getDisplay(), 90, 90, 90);
+		    gc.setForeground(closeShadowColor);
+		    gc.setAlpha(128);
+		    gc.drawArc(x - 1, y - 1, closeDiameter + 1, closeDiameter + 1, 0, 180);
+		    closeShadowColor.dispose();
+
+		    Color closeHighlightColor = new Color(getDisplay(), 210, 210, 210);
+		    gc.setForeground(closeHighlightColor);
+		    gc.setAlpha(189);
+		    gc.drawArc(x - 1, y - 1, closeDiameter + 1, closeDiameter + 1, 180, 180);
+		    closeHighlightColor.dispose();
+
+		    Color xColor = new Color(getDisplay(), 255, 255 ,255);
+		    gc.setForeground(xColor);
+		    int oldLineWidth = gc.getLineWidth();
+		    gc.setLineWidth(2);
+		    gc.drawLine(x + 2, y + 2, x + closeDiameter - 2, y + closeDiameter - 2);
+		    gc.drawLine(x + 2, y + closeDiameter - 2, x + closeDiameter - 2, y + 2);
+		    xColor.dispose();
+		    gc.setLineWidth(oldLineWidth);
+		    gc.setAlpha(oldAlpha);
+		    closeBackgroundColor.dispose();
+		  }
 			break;
 		}
 		case CTabFolder.NONE: {
@@ -231,6 +321,183 @@ void drawClose(GC gc) {
 	}
 }
 void drawSelected(GC gc ) {
+  if (!parent.simple) {
+    int curveRadius = parent.curveRadius;
+    int topY = y + parent.borderTop;
+    int leftBottomY = y + height - 1;
+    int rightBottomY = y + height - 1;
+    int leftX = x;// + parent.borderLeft;
+    int rightX = x + width - 1; // - parent.borderRight;
+
+    Path backgroundPath = new Path(gc.getDevice());
+    backgroundPath.moveTo(leftX, leftBottomY);
+    backgroundPath.lineTo(leftX, topY + curveRadius);
+    backgroundPath.quadTo(leftX, topY, leftX + curveRadius, topY);
+    backgroundPath.lineTo(rightX - curveRadius, topY);
+    backgroundPath.quadTo(rightX, topY, rightX, topY + curveRadius);
+    backgroundPath.lineTo(rightX, rightBottomY);
+
+    //Color backgroundColor = new Color(gc.getDevice(), 201, 201, 201);
+    Color backgroundColor = new Color(gc.getDevice(), 232, 232, 232);
+    gc.setBackground(backgroundColor);
+    gc.fillPath(backgroundPath);
+    backgroundColor.dispose();
+
+    int i = 0, lastIndex = -1;
+    while (i < parent.priority.length && parent.items[parent.priority[i]].showing) {
+      lastIndex = Math.max(lastIndex, parent.priority[i++]);
+    }
+    if (lastIndex == -1) lastIndex = parent.firstIndex;
+
+    if (parent.firstIndex == lastIndex) {
+      leftBottomY = y + height;
+      rightBottomY = y + height - parent.highlight_header;
+    }
+    else if (parent.selectedIndex == parent.firstIndex) {
+      leftBottomY = y + height;
+      rightBottomY = y + height - parent.highlight_header;
+    }
+//    else if (parent.selectedIndex == lastIndex) {
+//      leftBottomY = y + height - 1 - parent.highlight_header;
+//      rightBottomY = y + height - 1;
+//    }
+    else {
+      leftBottomY = y + height - parent.highlight_header;
+      rightBottomY = y + height - parent.highlight_header;
+    }
+    
+    float highlightPathYOffset = 1.0f;
+    float highlightPathXOffset = 0.25f;
+    Path highlightPath = new Path(gc.getDevice());
+    highlightPath.moveTo(leftX + highlightPathXOffset, leftBottomY);
+    highlightPath.lineTo(leftX + highlightPathXOffset, topY + curveRadius + highlightPathYOffset);
+    highlightPath.quadTo(leftX + highlightPathXOffset, topY + highlightPathYOffset, leftX + curveRadius + highlightPathXOffset, topY + highlightPathYOffset);
+    highlightPath.lineTo(rightX - curveRadius - highlightPathXOffset, topY + highlightPathYOffset);
+    highlightPath.quadTo(rightX - highlightPathXOffset, topY + highlightPathYOffset, rightX - highlightPathXOffset, topY + curveRadius + highlightPathYOffset);
+    highlightPath.lineTo(rightX - highlightPathXOffset, rightBottomY);
+
+    Color highlightPathColor = new Color(gc.getDevice(), 251, 251, 251);
+    gc.setForeground(highlightPathColor);
+    gc.drawPath(highlightPath);
+    highlightPath.dispose();
+    
+    if (parent.firstIndex == lastIndex) {
+      rightBottomY -= 1;
+    }
+    else if (parent.selectedIndex == parent.firstIndex) {
+      rightBottomY -= 1;
+      leftBottomY += 1;
+    }
+//    else if (parent.selectedIndex == lastIndex) {
+//      leftBottomY -= 1;
+//      rightBottomY = y + height - 1;
+//    }
+    else {
+      leftBottomY -= 1;
+      rightBottomY -= 1;
+    }
+    Path outlinePath = new Path(gc.getDevice());
+    outlinePath.moveTo(leftX, leftBottomY);
+    outlinePath.lineTo(leftX, topY + curveRadius);
+    outlinePath.quadTo(leftX, topY, leftX + curveRadius, topY);
+    outlinePath.lineTo(rightX - curveRadius, topY);
+    outlinePath.quadTo(rightX, topY, rightX, topY + curveRadius);
+    outlinePath.lineTo(rightX, rightBottomY);
+    
+    Color outlinePathColor = new Color(gc.getDevice(), 156, 156, 156);
+    gc.setForeground(outlinePathColor);
+    gc.drawPath(outlinePath);
+    outlinePathColor.dispose();
+    outlinePath.dispose();
+    
+    int rightEdge = Math.min (x + width, parent.getRightItemEdge());
+
+    // draw Image
+    int xDraw = x + LEFT_MARGIN;
+    if (parent.single && (parent.showClose || showClose)) xDraw += CTabFolder.BUTTON_SIZE; 
+    Image image = getImage();
+    if (image != null) {
+      Rectangle imageBounds = image.getBounds();
+      // only draw image if it won't overlap with close button
+      int maxImageWidth = rightEdge - xDraw - RIGHT_MARGIN;
+      //if (!parent.single && closeRect.width > 0) maxImageWidth -= closeRect.width + INTERNAL_SPACING;
+      if (imageBounds.width < maxImageWidth) {
+        int imageX = xDraw;
+        int imageY = y + (height - imageBounds.height) / 2;
+        imageY += parent.onBottom ? -1 : 1;
+        imageY -= 3;
+        if (!((parent.showClose || showClose) && (closeImageState == CTabFolder.HOT || closeImageState == CTabFolder.SELECTED))) {
+          gc.drawImage(image, imageX, imageY);
+        }
+        xDraw += imageBounds.width + INTERNAL_SPACING;
+      }
+    }
+    
+    // draw Text
+    int textWidth = rightEdge - xDraw - RIGHT_MARGIN - INTERNAL_SPACING;
+    //if (!parent.single && closeRect.width > 0) textWidth -= closeRect.width + INTERNAL_SPACING;
+    if (textWidth > 0) {
+      Font gcFont = gc.getFont();
+      //gc.setFont(font == null ? parent.getFont() : font);
+      Font selectedTabFont = null;
+      if (font == null) {
+        Font parentFont = parent.getFont();
+        selectedTabFont = new Font(getDisplay(), parentFont.getFontData()[0].getName(), parentFont.getFontData()[0].getHeight(), SWT.BOLD);
+        gc.setFont(selectedTabFont);
+      }
+      else {
+        gc.setFont(font == null ? parent.getFont() : font);
+      }
+      
+      if (shortenedText == null || shortenedTextWidth != textWidth) {
+        shortenedText = shortenText(gc, getText(), textWidth);
+        shortenedTextWidth = textWidth;
+      }
+      Point extent = gc.textExtent(shortenedText, FLAGS); 
+      int textY = y + (height - extent.y) / 2;
+      textY += parent.onBottom ? -1 : 1;
+      textY -= 3;
+
+      Color textHighlightColor = new Color(getDisplay(), 251, 251, 251);
+      gc.setForeground(textHighlightColor);
+      gc.drawText(shortenedText, xDraw, textY + 1, FLAGS);
+      textHighlightColor.dispose();
+      
+      Color textColor = new Color(getDisplay(), 0, 0, 0);
+      gc.setForeground(textColor);
+      gc.drawText(shortenedText, xDraw, textY, FLAGS);
+      textColor.dispose();
+      gc.setFont(gcFont);
+          
+      if (selectedTabFont != null) {
+        selectedTabFont.dispose();
+      }
+      
+      // draw a Focus rectangle
+      if (parent.isFocusControl()) {
+        Display display = getDisplay();
+        if (parent.simple || parent.single) {
+          gc.setBackground(display.getSystemColor(SWT.COLOR_BLACK));
+          gc.setForeground(display.getSystemColor(SWT.COLOR_WHITE));
+          gc.drawFocus(xDraw-1, textY-1, extent.x+2, extent.y+2);
+        } else {
+          Color focusColor = new Color(getDisplay(), 189, 189, 189);
+          gc.setForeground(focusColor);
+          int oldLineStyle = gc.getLineStyle();
+          //gc.setForeground(display.getSystemColor(CTabFolder.BUTTON_BORDER));
+          gc.setLineStyle(SWT.LINE_DOT);
+          gc.drawLine(xDraw, textY+extent.y+1, xDraw+extent.x+1, textY+extent.y+1);
+          focusColor.dispose();
+          gc.setLineStyle(oldLineStyle);
+        }
+      }
+    }
+    
+    if (parent.showClose || showClose) drawClose(gc);
+
+    return;
+  }
+  
 	Point size = parent.getSize();
 	int rightEdge = Math.min (x + width, parent.getRightItemEdge());
 	
@@ -287,7 +554,7 @@ void drawSelected(GC gc ) {
 			shape[index++] = y - 1;
 			shape[index++] = parent.simple ? rightEdge - 1 : rightEdge + parent.curveWidth - parent.curveIndent;
 			shape[index++] = y - 1;
-		} else {
+		} else if (parent.simple) {
 			int[] left = parent.simple ? CTabFolder.SIMPLE_TOP_LEFT_CORNER : CTabFolder.TOP_LEFT_CORNER;
 			int[] right = parent.simple ? CTabFolder.SIMPLE_TOP_RIGHT_CORNER : parent.curve;
 			if (parent.borderLeft == 0 && parent.indexOf(this) == parent.firstIndex) {
@@ -311,6 +578,8 @@ void drawSelected(GC gc ) {
 			shape[index++] = y + height + 1;
 			shape[index++] = parent.simple ? rightEdge - 1 : rightEdge + parent.curveWidth - parent.curveIndent;
 			shape[index++] = y + height + 1;
+		} else {
+		  shape = null;
 		}
 		
 		Rectangle clipping = gc.getClipping();
@@ -370,7 +639,7 @@ void drawSelected(GC gc ) {
 	}
 	
 	// draw Image
-	int xDraw = x + LEFT_MARGIN;
+  int xDraw = x + LEFT_MARGIN;
 	if (parent.single && (parent.showClose || showClose)) xDraw += CTabFolder.BUTTON_SIZE; 
 	Image image = getImage();
 	if (image != null) {
@@ -382,14 +651,16 @@ void drawSelected(GC gc ) {
 			int imageX = xDraw;
 			int imageY = y + (height - imageBounds.height) / 2;
 			imageY += parent.onBottom ? -1 : 1;
-			gc.drawImage(image, imageX, imageY);
+		  if (!(parent.showClose || showClose)) {
+		    gc.drawImage(image, imageX, imageY);
+		  }
 			xDraw += imageBounds.width + INTERNAL_SPACING;
 		}
 	}
 	
 	// draw Text
 	int textWidth = rightEdge - xDraw - RIGHT_MARGIN;
-	if (!parent.single && closeRect.width > 0) textWidth -= closeRect.width + INTERNAL_SPACING;
+	//if (!parent.single && closeRect.width > 0) textWidth -= closeRect.width + INTERNAL_SPACING;
 	if (textWidth > 0) {
 		Font gcFont = gc.getFont();
 		gc.setFont(font == null ? parent.getFont() : font);
@@ -612,7 +883,7 @@ void drawLeftUnselectedBorder(GC gc) {
 void drawUnselected(GC gc) {
 	// Do not draw partial items
 	if (!showing) return;
-	
+
 	Rectangle clipping = gc.getClipping();
 	Rectangle bounds = getBounds();
 	if (!clipping.intersects(bounds)) return;
@@ -620,14 +891,37 @@ void drawUnselected(GC gc) {
 	// draw border
 	int index = parent.indexOf(this);
 
-	if (index > 0 && index < parent.selectedIndex)
-		drawLeftUnselectedBorder(gc);
-	// If it is the last one then draw a line
-	if (index > parent.selectedIndex)
-		drawRightUnselectedBorder(gc);
+	if (!parent.simple) {
+	  int topY = y + 2;
+	  int bottomY = y + height - 1;
+	  //Color separatorColor = new Color(getDisplay(), 120, 120, 120);
+	  Color separatorColor = new Color(getDisplay(), 146, 146, 146);
+	  gc.setForeground(separatorColor);
+	  int thisIndex = parent.indexOf(this);
+	  if (thisIndex != parent.selectedIndex - 1) {
+	    gc.drawLine(x + width, topY, x + width, bottomY);
+	  }
+	  separatorColor.dispose();
+	  
+	  //Color separatorHighlightColor = new Color(getDisplay(), 170, 170, 170);
+    Color separatorHighlightColor = new Color(getDisplay(), 189, 189, 189);
+	  gc.setForeground(separatorHighlightColor);
+	  if (thisIndex != parent.selectedIndex - 1) {
+	    gc.drawLine(x + width - 1, topY, x + width - 1, bottomY);
+	    gc.drawLine(x + width + 1, topY, x + width + 1, bottomY);
+	  }
+	  separatorHighlightColor.dispose();
+	}
+	else {
+  	if (index > 0 && index < parent.selectedIndex)
+  		drawLeftUnselectedBorder(gc);
+  	// If it is the last one then draw a line
+  	if (index > parent.selectedIndex)
+  		drawRightUnselectedBorder(gc);
+	}
 
 	// draw Image
-	int xDraw = x + LEFT_MARGIN;
+  int xDraw = x + LEFT_MARGIN;
 	Image image = getImage();
 	if (image != null && parent.showUnselectedImage) {
 		Rectangle imageBounds = image.getBounds();
@@ -641,17 +935,23 @@ void drawUnselected(GC gc) {
 			int imageHeight = imageBounds.height;
 			int imageY = y + (height - imageHeight) / 2;
 			imageY += parent.onBottom ? -1 : 1;
+	    if (!parent.simple) {
+	      imageY -= 3;
+	    }
 			int imageWidth = imageBounds.width * imageHeight / imageBounds.height;
-			gc.drawImage(image, 
-				         imageBounds.x, imageBounds.y, imageBounds.width, imageBounds.height,
-				         imageX, imageY, imageWidth, imageHeight);
+		  if (!(parent.showUnselectedClose && (parent.showClose || showClose) && (closeImageState == CTabFolder.HOT || closeImageState == CTabFolder.SELECTED))) { 
+  			gc.drawImage(image, 
+  				         imageBounds.x, imageBounds.y, imageBounds.width, imageBounds.height,
+  				         imageX, imageY, imageWidth, imageHeight);
+		  }
 			xDraw += imageWidth + INTERNAL_SPACING;
 		}
 	}
+	
 	// draw Text
 	int textWidth = x + width - xDraw - RIGHT_MARGIN;
 	if (parent.showUnselectedClose && (parent.showClose || showClose)) {
-		textWidth -= closeRect.width + INTERNAL_SPACING;
+		//textWidth -= closeRect.width + INTERNAL_SPACING;
 	}
 	if (textWidth > 0) {
 		Font gcFont = gc.getFont();
@@ -663,6 +963,9 @@ void drawUnselected(GC gc) {
 		Point extent = gc.textExtent(shortenedText, FLAGS);
 		int textY = y + (height - extent.y) / 2;
 		textY += parent.onBottom ? -1 : 1;
+		if (!parent.simple) {
+      textY -= 3;
+		}
 		gc.setForeground(parent.getForeground());
 		gc.drawText(shortenedText, xDraw, textY, FLAGS);
 		gc.setFont(gcFont);
@@ -852,7 +1155,13 @@ int preferredWidth(GC gc, boolean isSelected, boolean minimum) {
 	if (text != null) {
 		if (w > 0) w += INTERNAL_SPACING;
 		if (font == null) {
-			w += gc.textExtent(text, FLAGS).x;
+		  Font gcFont = gc.getFont();
+		  Font parentFont = parent.getFont();
+		  Font selectedFont = new Font(getDisplay(), parentFont.getFontData()[0].getName(), parentFont.getFontData()[0].getHeight(), SWT.BOLD);
+		  gc.setFont(selectedFont);
+		  w += gc.textExtent(text, FLAGS).x;
+		  gc.setFont(gcFont);
+		  selectedFont.dispose();
 		} else {
 			Font gcFont = gc.getFont();
 			gc.setFont(font);
@@ -861,11 +1170,14 @@ int preferredWidth(GC gc, boolean isSelected, boolean minimum) {
 		}
 	}
 	if (parent.showClose || showClose) {
-		if (isSelected || parent.showUnselectedClose) {
+	  if (parent.simple && (isSelected || parent.showUnselectedClose)) {
 			if (w > 0) w += INTERNAL_SPACING;
 			w += CTabFolder.BUTTON_SIZE;
 		}
 	}
+  if (!parent.simple) {
+    if (w > 0) w += INTERNAL_SPACING;
+  }
 	return w + LEFT_MARGIN + RIGHT_MARGIN;
 }
 /**

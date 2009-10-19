@@ -10,11 +10,29 @@
  *******************************************************************************/
 package org.eclipse.swt.widgets;
 
-import org.eclipse.swt.*;
-import org.eclipse.swt.accessibility.*;
-import org.eclipse.swt.events.*;
-import org.eclipse.swt.graphics.*;
-import org.eclipse.swt.internal.cocoa.*;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTException;
+import org.eclipse.swt.accessibility.ACC;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Cursor;
+import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.GCData;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.internal.cocoa.NSArray;
+import org.eclipse.swt.internal.cocoa.NSEvent;
+import org.eclipse.swt.internal.cocoa.NSGraphicsContext;
+import org.eclipse.swt.internal.cocoa.NSMutableArray;
+import org.eclipse.swt.internal.cocoa.NSNumber;
+import org.eclipse.swt.internal.cocoa.NSPoint;
+import org.eclipse.swt.internal.cocoa.NSRect;
+import org.eclipse.swt.internal.cocoa.NSString;
+import org.eclipse.swt.internal.cocoa.NSView;
+import org.eclipse.swt.internal.cocoa.OS;
+import org.eclipse.swt.internal.cocoa.SWTView;
+import org.eclipse.swt.internal.cocoa.id;
 
 /**
  * Instances of the receiver represent a selectable user interface object
@@ -273,8 +291,43 @@ void createHandle () {
 }
 
 void drawBackground (int /*long*/ id, NSGraphicsContext context, NSRect rect) {
-	if (id != view.id) return;
-	fillBackground (view, context, rect, -1);
+  if (id != view.id) return;
+  fillBackground (view, context, rect, -1);
+  Color grabberColor = new Color(getDisplay(), 164, 164, 164);
+  GCData gcdata = new GCData ();
+  gcdata.device = display;
+  GC gc = GC.cocoa_new (this, gcdata);
+  gc.setForeground(grabberColor);
+  try {
+    int grabberLength = 12;
+    Rectangle bounds = getBounds();
+    if ((style & SWT.VERTICAL) != 0) {
+      int x = bounds.width / 2 - 1;
+      int y = (bounds.height - grabberLength) / 2;
+      if (bounds.width >= 5) {
+        gc.drawLine(x, y, x, y + grabberLength);
+        gc.drawLine(x + 2, y, x + 2, y + grabberLength);
+      }
+      else if (bounds.width >= 3) {
+        gc.drawLine(x + 1, y, x + 1, y + grabberLength);
+      }
+    }
+    else {
+      int x = (bounds.width - grabberLength) / 2;
+      int y = bounds.height / 2 - 1;
+      if (bounds.height >= 5) {
+        gc.drawLine(x, y, x + grabberLength, y);
+        gc.drawLine(x, y + 2, x + grabberLength, y + 2);
+      }
+      else if (bounds.height >= 3) {
+        gc.drawLine(x, y + 1, x + grabberLength, y + 1);
+      }
+    }
+  }
+  finally {
+    gc.dispose();
+  }
+  grabberColor.dispose();
 }
 
 Cursor findCursor () {

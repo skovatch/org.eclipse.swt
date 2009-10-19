@@ -614,7 +614,7 @@ public class SWT {
 	 * @since 3.2
 	 */
 	public static final int PaintItem = 42;	
-	
+
 	/**
 	 * The IME composition event type (value is 43).  
 	 * <p>
@@ -638,6 +638,22 @@ public class SWT {
 	 */
 	public static final int ImeComposition = 43;
 	
+	/**
+	 * The external open event type (value is 44).
+	 * <p>
+	 * The external open event is sent when an operating system
+	 * notifies the application that the user would like to open
+	 * a set of files (for instance, by double-clicking on the
+	 * files in the operating system's file management app).
+	 * </p>
+	 * 
+	 * @see org.eclipse.swt.widgets.Display#addListener
+	 * @see org.eclipse.swt.widgets.Event
+	 * 
+	 * @since 3.5.1
+	 */
+	public static final int ExternalOpen = 44;
+
 	/* Event Details */
 	
 	/**

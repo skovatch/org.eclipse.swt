@@ -163,7 +163,7 @@ public class Display extends Device {
 	// the following Callbacks are never freed
 	static Callback windowCallback2, windowCallback3, windowCallback4, windowCallback5, windowCallback6;
 	static Callback dialogCallback3, dialogCallback4, dialogCallback5;
-	static Callback applicationCallback2, applicationCallback3, applicationCallback6;
+	static Callback applicationCallback2, applicationCallback3, applicationCallback4, applicationCallback6;
 	static Callback fieldEditorCallback3, fieldEditorCallback4;
 	
 	/* Display Shutdown */
@@ -792,6 +792,9 @@ void createDisplay (DeviceData data) {
 			applicationCallback3 = new Callback(clazz, "applicationProc", 3);
 			int /*long*/ proc3 = applicationCallback3.getAddress();
 			if (proc3 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
+			applicationCallback4 = new Callback(clazz, "applicationProc", 4);
+			int /*long*/ proc4 = applicationCallback4.getAddress();
+			if (proc4 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 			applicationCallback6 = new Callback(clazz, "applicationProc", 6);
 			int /*long*/ proc6 = applicationCallback6.getAddress();
 			if (proc6 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
@@ -808,6 +811,8 @@ void createDisplay (DeviceData data) {
 		if (OS.objc_lookUpClass (className) == 0) {
 			int /*long*/ appProc3 = applicationCallback3.getAddress();
 			if (appProc3 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
+			int /*long*/ appProc4 = applicationCallback4.getAddress();
+			if (appProc4 == 0) error (SWT.ERROR_NO_MORE_CALLBACKS);
 			cls = OS.objc_allocateClassPair(OS.class_NSObject, className, 0);
 			OS.class_addMethod(cls, OS.sel_applicationWillFinishLaunching_, appProc3, "@:@");
 			OS.class_addMethod(cls, OS.sel_terminate_, appProc3, "@:@");
@@ -818,6 +823,9 @@ void createDisplay (DeviceData data) {
 			OS.class_addMethod(cls, OS.sel_unhideAllApplications_, appProc3, "@:@");
 			OS.class_addMethod(cls, OS.sel_applicationDidBecomeActive_, appProc3, "@:@");
 			OS.class_addMethod(cls, OS.sel_applicationDidResignActive_, appProc3, "@:@");
+			OS.class_addMethod(cls, OS.sel_application_openFile_, appProc4, "@:@@");
+			OS.class_addMethod(cls, OS.sel_application_openFiles_, appProc4, "@:@@");
+			OS.class_addMethod(cls, OS.sel_applicationShouldHandleReopen_hasVisibleWindows_, appProc4, "@:@B");
 			OS.objc_registerClassPair(cls);
 		}
 		if (applicationDelegate == null) {
@@ -4180,6 +4188,31 @@ void applicationDidResignActive (int /*long*/ id, int /*long*/ sel, int /*long*/
 	checkEnterExit(null, null, false);
 }
 
+int applicationOpenFile(int /*long*/ id, int /*long*/ sel, int /*long*/ application, int /*long*/ filename) {
+	NSString filenameStr = new NSString(filename);
+	Event event = new Event();
+	event.data = new String[] { filenameStr.getString() };
+	sendEvent(SWT.ExternalOpen, event);
+	return 1;
+}
+
+void applicationOpenFiles(int /*long*/ id, int /*long*/ sel, int /*long*/ application, int /*long*/ filenames) {
+	NSArray filenamesArray = new NSArray(filenames);
+	long count = filenamesArray.count();
+	String[] filenameStrs = new String[(int)count];
+	for (int i = 0; i < count; i ++) {
+		filenameStrs[i] = new NSString(filenamesArray.objectAtIndex(i)).getString();
+	}
+	Event event = new Event();
+	event.data = filenameStrs;
+	sendEvent(SWT.ExternalOpen, event);
+	OS.objc_msgSend(application, OS.sel_replyToOpenOrPrint_, 0 /*NSApplicationDelegateReplySuccess*/);
+}
+
+int applicationShouldHandleReopen(int /*long*/ id, int /*long*/ sel, int /*long*/ application, int /*long*/ hasVisibleWindows) {
+	return 1;
+}
+
 int /*long*/ applicationNextEventMatchingMask (int /*long*/ id, int /*long*/ sel, int /*long*/ mask, int /*long*/ expiration, int /*long*/ mode, int /*long*/ dequeue) {
 	if (dequeue != 0 && trackingControl != null && !trackingControl.isDisposed()) runDeferredEvents();
 	objc_super super_struct = new objc_super();
@@ -4374,6 +4407,21 @@ static int /*long*/ applicationProc(int /*long*/ id, int /*long*/ sel, int /*lon
 		display.applicationDidBecomeActive(id, sel, arg0);
 	} else if (sel == OS.sel_applicationDidResignActive_) {
 		display.applicationDidResignActive(id, sel, arg0);
+	}
+	return 0;
+}
+
+static int /*long*/ applicationProc(int /*long*/ id, int /*long*/ sel, int /*long*/ arg0, int /*long*/ arg1) {
+	System.out.println("applicationOpenFiles id,sel,arg0,arg1");
+	//TODO optimize getting the display
+	Display display = getCurrent ();
+	if (display == null) return 0;
+	if (sel == OS.sel_application_openFile_) {
+		return display.applicationOpenFile(id, sel, arg0, arg1);
+	} else if (sel == OS.sel_application_openFiles_) {
+		display.applicationOpenFiles(id, sel, arg0, arg1);
+	} else if (sel == OS.sel_applicationShouldHandleReopen_hasVisibleWindows_) {
+		return display.applicationShouldHandleReopen(id, sel, arg0, arg1);
 	}
 	return 0;
 }

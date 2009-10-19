@@ -180,7 +180,9 @@ protected void layout(Composite composite, boolean flushCache) {
 			int w = x - rect.x - form.marginWidth - form.highlight - trim.width;
 			int h = topHeight - trim.height;
 			leftSize = computeChildSize(left, w, h, false);
-			left.setBounds(rect.x + form.marginWidth + form.highlight, y, leftSize.x, topHeight);
+			// MS: Added "+ 3" to indent the view form label -- total hack since we don't actually "know" it's a label
+			int leftMargin = 3;
+			left.setBounds(rect.x + form.marginWidth + form.highlight + leftMargin, y, leftSize.x, topHeight);
 		}
 		if (top)y += topHeight + form.verticalSpacing;
 	}
