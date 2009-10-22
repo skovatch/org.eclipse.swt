@@ -231,6 +231,7 @@ int /*long*/ applierFunc(int /*long*/ info, int /*long*/ elementPtr) {
 }
 
 NSAutoreleasePool checkGC (int mask) {
+	if (mask != FONT) data.drawn = true;
 	NSAutoreleasePool pool = null;
 	if (!NSThread.isMainThread()) pool = (NSAutoreleasePool) new NSAutoreleasePool().alloc().init();
 	if (data.flippedContext != null && !handle.isEqual(NSGraphicsContext.currentContext())) {

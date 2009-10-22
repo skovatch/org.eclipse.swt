@@ -60,4 +60,6 @@ public final class GCData {
 	public Thread thread;
 	public NSGraphicsContext flippedContext;
 	public boolean restoreContext;
+	
+	public boolean drawn;
 }

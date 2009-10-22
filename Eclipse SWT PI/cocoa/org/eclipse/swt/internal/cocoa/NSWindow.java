@@ -90,12 +90,20 @@ public void disableCursorRects() {
 	OS.objc_msgSend(this.id, OS.sel_disableCursorRects);
 }
 
+public void disableFlushWindow() {
+	OS.objc_msgSend(this.id, OS.sel_disableFlushWindow);
+}
+
 public void display() {
 	OS.objc_msgSend(this.id, OS.sel_display);
 }
 
 public void enableCursorRects() {
 	OS.objc_msgSend(this.id, OS.sel_enableCursorRects);
+}
+
+public void enableFlushWindow() {
+	OS.objc_msgSend(this.id, OS.sel_enableFlushWindow);
 }
 
 public NSText fieldEditor(boolean createFlag, id anObject) {
@@ -106,6 +114,10 @@ public NSText fieldEditor(boolean createFlag, id anObject) {
 public NSResponder firstResponder() {
 	int /*long*/ result = OS.objc_msgSend(this.id, OS.sel_firstResponder);
 	return result != 0 ? new NSResponder(result) : null;
+}
+
+public void flushWindow() {
+	OS.objc_msgSend(this.id, OS.sel_flushWindow);
 }
 
 public NSRect frame() {

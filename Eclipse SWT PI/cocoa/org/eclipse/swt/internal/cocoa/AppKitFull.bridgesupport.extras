@@ -4097,10 +4097,16 @@
 		<method selector="disableCursorRects" swt_gen="true">
 			<retval swt_gen="true"></retval>
 		</method>
+		<method selector="disableFlushWindow" swt_gen="true">
+			<retval swt_gen="true"></retval>
+		</method>
 		<method selector="display" swt_gen="true">
 			<retval swt_gen="true"></retval>
 		</method>
 		<method selector="enableCursorRects" swt_gen="true">
+			<retval swt_gen="true"></retval>
+		</method>
+		<method selector="enableFlushWindow" swt_gen="true">
 			<retval swt_gen="true"></retval>
 		</method>
 		<method selector="fieldEditor:forObject:" swt_gen="true">
@@ -4109,6 +4115,9 @@
 			<retval swt_gen="true"></retval>
 		</method>
 		<method selector="firstResponder" swt_gen="true">
+			<retval swt_gen="true"></retval>
+		</method>
+		<method selector="flushWindow" swt_gen="true">
 			<retval swt_gen="true"></retval>
 		</method>
 		<method selector="frame" swt_gen="true">

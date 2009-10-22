@@ -4072,7 +4072,10 @@ void update (boolean all) {
 //	checkWidget();
 	if (display.isPainting.containsObject(view)) return;
 	//TODO - not all
+	NSWindow window = view.window();
+	window.disableFlushWindow();
 	view.displayIfNeeded ();
+	window.enableFlushWindow();
 }
 
 void updateBackgroundMode () {
