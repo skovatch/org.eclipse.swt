@@ -218,7 +218,7 @@ public class CTabFolder extends Composite {
 	int[] topCurveHighlightEnd;
 	int curveWidth = 0;
 	int curveIndent = 0;
-	int curveRadius = 11;
+	int curveRadius = 5;
 	
 	// when disposing CTabFolder, don't try to layout the items or 
 	// change the selection as each child is destroyed.
@@ -2502,17 +2502,21 @@ void onPaint(Event event) {
 //gc.fillRectangle(-10, -10, size.x + 20, size.y+20);
 //}
 
+	Rectangle clipping = gc.getClipping();
 	drawBody(event);
 	
 	gc.setFont(gcFont);
 	gc.setForeground(gcForeground);
 	gc.setBackground(gcBackground);
 	
-	drawTabArea(event);
-	
-	gc.setFont(gcFont);
-	gc.setForeground(gcForeground);
-	gc.setBackground(gcBackground);	
+	// MS: this check is good for about 10% on scrolling ...
+	if ((!onBottom && clipping.y < 30) || (onBottom && (clipping.y > getBounds().height - 30 || clipping.y + clipping.height > getBounds().height - 30))) {
+		drawTabArea(event);
+		
+		gc.setFont(gcFont);
+		gc.setForeground(gcForeground);
+		gc.setBackground(gcBackground);
+	}
 }
 
 void onResize() {
