@@ -11,6 +11,8 @@
 package org.eclipse.swt.widgets;
 
 
+import java.awt.BufferCapabilities.FlipContents;
+
 import org.eclipse.swt.*;
 import org.eclipse.swt.graphics.*;
 
@@ -27,7 +29,7 @@ import org.eclipse.swt.graphics.*;
  * </p><p>
  * <dl>
  * <dt><b>Styles:</b></dt>
- * <dd>FLAT, HORIZONTAL, VERTICAL</dd>
+ * <dd>FLAT, HORIZONTAL, VERTICAL, CENTER, LEFT, RIGHT</dd>
  * <dt><b>Events:</b></dt>
  * <dd>(none)</dd>
  * </dl>
@@ -88,7 +90,7 @@ public class CoolBar extends Composite {
  */
 public CoolBar (Composite parent, int style) {
 	super (parent, checkStyle(style));
-	if ((style & SWT.VERTICAL) != 0) {
+ 	if ((style & SWT.VERTICAL) != 0) {
 		this.style |= SWT.VERTICAL;
 		hoverCursor = new Cursor(display, SWT.CURSOR_SIZENS);
 	} else {
@@ -436,7 +438,6 @@ void createItem (CoolItem item, int index) {
 	newOriginals [index] = item;
 	originalItems = newOriginals;
 	layoutItems();
-
 }
 void destroyItem(CoolItem item) {
 	if (inDispose) return;
@@ -708,47 +709,50 @@ void onPaint(Event event) {
 			if (!clipping.intersects(rect)) continue;
 			boolean nativeGripper = false;
 			
-			/* Draw gripper. */
-			if (!isLocked) {
-				rect = fixRectangle(bounds.x, bounds.y, CoolItem.MINIMUM_WIDTH, bounds.height);
-				if (!flat) 	nativeGripper = drawGripper(rect.x, rect.y, rect.width, rect.height, vertical);
-				if (!nativeGripper) {
-					int grabberTrim = 2; 
-					int grabberHeight = bounds.height - (2 * grabberTrim) - 1;
-					gc.setLineStyle(SWT.LINE_DASH);
-					gc.setForeground(shadowColor);
-					rect = fixRectangle(
-							bounds.x + CoolItem.MARGIN_WIDTH, 
-							bounds.y + grabberTrim, 
-							2, 
-							grabberHeight);
-					for (int y = rect.y; y <= rect.y + rect.height; y += 3) {
-					  gc.drawPoint(rect.x + 1, y);
+			if ((items[row][i].getStyle() & SWT.FLEXIBLE_SPACE) == 0) {
+				/* Draw gripper. */
+				// MS: if there is only one row and one item, don't draw a gripper
+				if (!isLocked && (items.length > 1 || items[row].length > 1)) {
+					rect = fixRectangle(bounds.x, bounds.y, CoolItem.MINIMUM_WIDTH, bounds.height);
+					if (!flat) 	nativeGripper = drawGripper(rect.x, rect.y, rect.width, rect.height, vertical);
+					if (!nativeGripper) {
+						int grabberTrim = 2; 
+						int grabberHeight = bounds.height - (2 * grabberTrim) - 1;
+						gc.setLineStyle(SWT.LINE_DASH);
+						gc.setForeground(shadowColor);
+						rect = fixRectangle(
+								bounds.x + CoolItem.MARGIN_WIDTH, 
+								bounds.y + grabberTrim, 
+								2, 
+								grabberHeight);
+						for (int y = rect.y; y <= rect.y + rect.height; y += 3) {
+						  gc.drawPoint(rect.x + 1, y);
+						}
+	//					gc.setForeground(highlightColor);
+	//					rect = fixRectangle(
+	//							bounds.x + CoolItem.MARGIN_WIDTH, 
+	//							bounds.y + grabberTrim + 1, 
+	//							bounds.x + CoolItem.MARGIN_WIDTH, 
+	//							bounds.y + grabberTrim + grabberHeight - 1);
+	//					gc.drawLine(rect.x, rect.y, rect.width, rect.height);
+	//					rect = fixRectangle(
+	//							bounds.x + CoolItem.MARGIN_WIDTH, 
+	//							bounds.y + grabberTrim, 
+	//							bounds.x + CoolItem.MARGIN_WIDTH + 1, 
+	//							bounds.y + grabberTrim);
+	//					gc.drawLine(rect.x, rect.y, rect.width, rect.height);
 					}
-//					gc.setForeground(highlightColor);
-//					rect = fixRectangle(
-//							bounds.x + CoolItem.MARGIN_WIDTH, 
-//							bounds.y + grabberTrim + 1, 
-//							bounds.x + CoolItem.MARGIN_WIDTH, 
-//							bounds.y + grabberTrim + grabberHeight - 1);
-//					gc.drawLine(rect.x, rect.y, rect.width, rect.height);
-//					rect = fixRectangle(
-//							bounds.x + CoolItem.MARGIN_WIDTH, 
-//							bounds.y + grabberTrim, 
-//							bounds.x + CoolItem.MARGIN_WIDTH + 1, 
-//							bounds.y + grabberTrim);
-//					gc.drawLine(rect.x, rect.y, rect.width, rect.height);
 				}
-			}
-			
-			/* Draw separator. */
-			if (!flat && !nativeGripper && i != 0) {
-				gc.setForeground(shadowColor);
-				rect = fixRectangle(bounds.x, bounds.y, bounds.x, bounds.y + bounds.height - 1);
-				gc.drawLine(rect.x, rect.y, rect.width, rect.height);
-				gc.setForeground(highlightColor);
-				rect = fixRectangle(bounds.x + 1, bounds.y, bounds.x + 1, bounds.y + bounds.height - 1);
-				gc.drawLine(rect.x, rect.y, rect.width, rect.height);
+				
+				/* Draw separator. */
+				if (!flat && !nativeGripper && i != 0) {
+					gc.setForeground(shadowColor);
+					rect = fixRectangle(bounds.x, bounds.y, bounds.x, bounds.y + bounds.height - 1);
+					gc.drawLine(rect.x, rect.y, rect.width, rect.height);
+					gc.setForeground(highlightColor);
+					rect = fixRectangle(bounds.x + 1, bounds.y, bounds.x + 1, bounds.y + bounds.height - 1);
+					gc.drawLine(rect.x, rect.y, rect.width, rect.height);
+				}
 			}
 		}
 		if (!flat && row + 1 < items.length) {
@@ -847,15 +851,57 @@ int layoutItems () {
 		if (row > 0) y += rowSpacing;
 	
 		/* lay the items out */
+		// if there is only one row and only one item, then jack it over to the left so
+		// we don't leave a space for a gripper
+		if (items.length == 1 && items[row].length == 1) {
+			x -= (CoolItem.MARGIN_WIDTH + CoolItem.GRABBER_WIDTH);
+			// MS: this just looks better ... i don't know where the extra comes from
+			x -= 5;
+		}
+		
+		int flexibleSpaceCount = 0;
+		Rectangle[] itemBounds = new Rectangle[count];
 		for (int i = 0; i < count; i++) {
 			CoolItem child = items[row][i];
+			if ((child.getStyle() & SWT.FLEXIBLE_SPACE) != 0) {
+				flexibleSpaceCount ++;
+			}
 			int newWidth = available + child.internalGetMinimumWidth();
 			if (i + 1 < count) {
 				newWidth = Math.min(newWidth, child.requestedWidth);
 				available -= (newWidth - child.internalGetMinimumWidth());
 			}
+			itemBounds[i] = new Rectangle(x, y, newWidth, rowHeight);
+			x += newWidth;
+		}
+		
+		int flexibleSpacePerItem = 0;
+		if (flexibleSpaceCount == 0) {
+			if ((style & SWT.LEFT) != 0) {
+				// leave it alone
+			}
+			else if ((style & SWT.CENTER) != 0) {
+				int halfAvailable = available / 2;
+				for (int i = 0; i < count; i ++) {
+					itemBounds[i].x += halfAvailable;
+				}
+			}
+			else if ((style & SWT.RIGHT) != 0) {
+				for (int i = 0; i < count; i ++) {
+					itemBounds[i].x += available;
+				}
+			}
+		}
+		else {
+			flexibleSpacePerItem = available / flexibleSpaceCount;
+		}
+
+		int flexibleSpaceOffset = 0;
+		for (int i = 0; i < count; i ++) {
+			CoolItem child = items[row][i];
 			Rectangle oldBounds = child.internalGetBounds();
-			Rectangle newBounds = new Rectangle(x, y, newWidth, rowHeight);
+			Rectangle newBounds = itemBounds[i];
+			newBounds.x += flexibleSpaceOffset;
 			if (!oldBounds.equals(newBounds)) {
 				child.setBounds(newBounds.x, newBounds.y, newBounds.width, newBounds.height);
 				Rectangle damage = new Rectangle(0, 0, 0, 0);
@@ -884,8 +930,11 @@ int layoutItems () {
 				}
 				internalRedraw(damage.x, damage.y, damage.width, damage.height);
 			}
-			x += newWidth;
+			if ((child.getStyle() & SWT.FLEXIBLE_SPACE) != 0) {
+				flexibleSpaceOffset += flexibleSpacePerItem;
+			}
 		}
+
 		y += rowHeight;
 	}
 	return y;

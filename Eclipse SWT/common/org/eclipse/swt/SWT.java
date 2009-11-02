@@ -891,6 +891,14 @@ public class SWT {
 	public static final int BAR = 1 << 1;
 
 	/**
+	 * Style constant for a flexible space item (value is 1&lt;&lt;1).
+	 * <p><b>Used By:</b><ul>
+	 * <li><code>CoolItem</code></li>
+	 * </ul></p>
+	 */
+	public static final int FLEXIBLE_SPACE = 1 << 6;
+
+	/**
 	 * Style constant for drop down menu/list behavior (value is 1&lt;&lt;2).
 	 * <br>Note that for <code>DateTime</code> this is a <em>HINT</em>.
 	 * <p><b>Used By:</b><ul>
