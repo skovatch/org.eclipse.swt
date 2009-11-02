@@ -27,7 +27,7 @@ import org.eclipse.swt.graphics.*;
  * </p><p>
  * <dl>
  * <dt><b>Styles:</b></dt>
- * <dd>FLAT, HORIZONTAL, VERTICAL</dd>
+ * <dd>FLAT, HORIZONTAL, VERTICAL, CENTER, LEFT, RIGHT</dd>
  * <dt><b>Events:</b></dt>
  * <dd>(none)</dd>
  * </dl>
@@ -709,43 +709,45 @@ void onPaint(Event event) {
 			boolean nativeGripper = false;
 			
 			/* Draw gripper. */
-			if (!isLocked) {
-				rect = fixRectangle(bounds.x, bounds.y, CoolItem.MINIMUM_WIDTH, bounds.height);
-				if (!flat) 	nativeGripper = drawGripper(rect.x, rect.y, rect.width, rect.height, vertical);
-				if (!nativeGripper) {
-					int grabberTrim = 2; 
-					int grabberHeight = bounds.height - (2 * grabberTrim) - 1;
+			if ((items[row][i].getStyle() & SWT.FLEXIBLE_SPACE) == 0) {
+				if (!isLocked && (items.length > 1 || items[row].length > 1)) {
+					rect = fixRectangle(bounds.x, bounds.y, CoolItem.MINIMUM_WIDTH, bounds.height);
+					if (!flat) 	nativeGripper = drawGripper(rect.x, rect.y, rect.width, rect.height, vertical);
+					if (!nativeGripper) {
+						int grabberTrim = 2; 
+						int grabberHeight = bounds.height - (2 * grabberTrim) - 1;
+						gc.setForeground(shadowColor);
+						rect = fixRectangle(
+								bounds.x + CoolItem.MARGIN_WIDTH, 
+								bounds.y + grabberTrim, 
+								2, 
+								grabberHeight);
+						gc.drawRectangle(rect);
+						gc.setForeground(highlightColor);
+						rect = fixRectangle(
+								bounds.x + CoolItem.MARGIN_WIDTH, 
+								bounds.y + grabberTrim + 1, 
+								bounds.x + CoolItem.MARGIN_WIDTH, 
+								bounds.y + grabberTrim + grabberHeight - 1);
+						gc.drawLine(rect.x, rect.y, rect.width, rect.height);
+						rect = fixRectangle(
+								bounds.x + CoolItem.MARGIN_WIDTH, 
+								bounds.y + grabberTrim, 
+								bounds.x + CoolItem.MARGIN_WIDTH + 1, 
+								bounds.y + grabberTrim);
+						gc.drawLine(rect.x, rect.y, rect.width, rect.height);
+					}
+				}
+				
+				/* Draw separator. */
+				if (!flat && !nativeGripper && i != 0) {
 					gc.setForeground(shadowColor);
-					rect = fixRectangle(
-							bounds.x + CoolItem.MARGIN_WIDTH, 
-							bounds.y + grabberTrim, 
-							2, 
-							grabberHeight);
-					gc.drawRectangle(rect);
-					gc.setForeground(highlightColor);
-					rect = fixRectangle(
-							bounds.x + CoolItem.MARGIN_WIDTH, 
-							bounds.y + grabberTrim + 1, 
-							bounds.x + CoolItem.MARGIN_WIDTH, 
-							bounds.y + grabberTrim + grabberHeight - 1);
+					rect = fixRectangle(bounds.x, bounds.y, bounds.x, bounds.y + bounds.height - 1);
 					gc.drawLine(rect.x, rect.y, rect.width, rect.height);
-					rect = fixRectangle(
-							bounds.x + CoolItem.MARGIN_WIDTH, 
-							bounds.y + grabberTrim, 
-							bounds.x + CoolItem.MARGIN_WIDTH + 1, 
-							bounds.y + grabberTrim);
+					gc.setForeground(highlightColor);
+					rect = fixRectangle(bounds.x + 1, bounds.y, bounds.x + 1, bounds.y + bounds.height - 1);
 					gc.drawLine(rect.x, rect.y, rect.width, rect.height);
 				}
-			}
-			
-			/* Draw separator. */
-			if (!flat && !nativeGripper && i != 0) {
-				gc.setForeground(shadowColor);
-				rect = fixRectangle(bounds.x, bounds.y, bounds.x, bounds.y + bounds.height - 1);
-				gc.drawLine(rect.x, rect.y, rect.width, rect.height);
-				gc.setForeground(highlightColor);
-				rect = fixRectangle(bounds.x + 1, bounds.y, bounds.x + 1, bounds.y + bounds.height - 1);
-				gc.drawLine(rect.x, rect.y, rect.width, rect.height);
 			}
 		}
 		if (!flat && row + 1 < items.length) {
@@ -844,15 +846,64 @@ int layoutItems () {
 		if (row > 0) y += rowSpacing;
 	
 		/* lay the items out */
+		// if there is only one row and only one item, then jack it over to the left so
+		// we don't leave a space for a gripper
+		if (items.length == 1 && items[row].length == 1) {
+			x -= (CoolItem.MARGIN_WIDTH + CoolItem.GRABBER_WIDTH);
+			// MS: this just looks better ... i don't know where the extra comes from
+			// admittedly, this is dirty as hell
+			x -= 5;
+		}
+
+		// We need to do a sweep across all items first to determine the unspaced width
+		// of the items so that we can then apply flexible spacing and alignment
+		int flexibleSpaceCount = 0;
+		Rectangle[] itemBounds = new Rectangle[count];
 		for (int i = 0; i < count; i++) {
 			CoolItem child = items[row][i];
+			if ((child.getStyle() & SWT.FLEXIBLE_SPACE) != 0) {
+				flexibleSpaceCount ++;
+			}
 			int newWidth = available + child.internalGetMinimumWidth();
 			if (i + 1 < count) {
 				newWidth = Math.min(newWidth, child.requestedWidth);
 				available -= (newWidth - child.internalGetMinimumWidth());
 			}
+			itemBounds[i] = new Rectangle(x, y, newWidth, rowHeight);
+			x += newWidth;
+		}
+
+		int flexibleSpacePerItem = 0;
+		// If there is any flexible space in the coolbar, then alignment doesn't apply because
+		// the flexible space will take up all the free space
+		if (flexibleSpaceCount == 0) {
+			if ((style & SWT.LEFT) != 0) {
+				// leave it alone
+			}
+			else if ((style & SWT.CENTER) != 0) {
+				int halfAvailable = available / 2;
+				for (int i = 0; i < count; i ++) {
+					itemBounds[i].x += halfAvailable;
+				}
+			}
+			else if ((style & SWT.RIGHT) != 0) {
+				for (int i = 0; i < count; i ++) {
+					itemBounds[i].x += available;
+				}
+			}
+		}
+		else {
+			// Divide out the available space across all of the flexible space cool items
+			flexibleSpacePerItem = available / flexibleSpaceCount;
+		}
+
+		// As we run through the items, accumulate flexible space as we hand it out
+		int flexibleSpaceOffset = 0;
+		for (int i = 0; i < count; i ++) {
+			CoolItem child = items[row][i];
 			Rectangle oldBounds = child.internalGetBounds();
-			Rectangle newBounds = new Rectangle(x, y, newWidth, rowHeight);
+			Rectangle newBounds = itemBounds[i];
+			newBounds.x += flexibleSpaceOffset;
 			if (!oldBounds.equals(newBounds)) {
 				child.setBounds(newBounds.x, newBounds.y, newBounds.width, newBounds.height);
 				Rectangle damage = new Rectangle(0, 0, 0, 0);
@@ -881,7 +932,11 @@ int layoutItems () {
 				}
 				internalRedraw(damage.x, damage.y, damage.width, damage.height);
 			}
-			x += newWidth;
+			// we can probably just skip the item redraw entirely since it's just an empty space,
+			// but i was afraid of breaking something, so just let it go ...
+			if ((child.getStyle() & SWT.FLEXIBLE_SPACE) != 0) {
+				flexibleSpaceOffset += flexibleSpacePerItem;
+			}
 		}
 		y += rowHeight;
 	}
